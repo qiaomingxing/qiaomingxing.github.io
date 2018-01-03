@@ -4,6 +4,170 @@ title: Sample Post
 date: 2016-02-15 15:32:24.000000000 +09:00
 ---
 
+**追根溯源**
+做过angular项目的小伙伴都知道，项目经过迭代，package文件中的依赖库可能不是最新的，为及时更新依赖库，就需要升级版本，而升级版本是个大麻烦，因为它牵一发而动全身，依赖库耦合度太高，如果仅仅是简单的版本号变更，极有可能出现 peer Dependencies 错误。那该如何处理这个问题呢？这次趁平台分享，把自己踩过的坑，总结经验分享给大家。
+
+**依赖包版本说明**
+在保证准确无误的升级之前，我们必须要知道npm管理依赖包中（package.json）版本符号的意思：
+①只有版本号
+"@angular/core": "2.0.1"
+安装指定版本2.0.1
+②符号 ^
+ "@angular/core": "^2.0.1"
+ 安装该版本以及比该版本更新的版本， 只能安装 2.0.1至2.9.9之间的版本，3.0.0版本及以上不可以。
+③符号 ~
+"@angular/core": "~2.0.1"
+只能安装 2.0.1至 2.0.9之间的版本，2.1.0版本及以上不可以
+④符号 >=   <=
+可以使用如下形式： >= ... <=
+"@angular/core": ">=2.0.1<=3.0.0"
+限定版本在2.0.1和3.0.0之间
+
+**常用npm升级命令**
+①npm list --depth 0 ：简单查看 依赖库 的信息
+②npm outdated ：查询当前package中有哪些依赖库是过时的
+③npm view 包名称@版本号 peerDependencies ：查看具体某个依赖包的依赖关系
+
+**实战演练**
+以github一个ng2起步项目为例升级依赖包
+package.json 文件内容：
+```
+"dependencies": {
+    "@angular/common": "2.2.3",
+    "@angular/compiler": "2.2.3",
+    "@angular/core": "2.2.3",
+    "@angular/forms": "2.2.3",
+    "@angular/http": "2.2.3",
+    "@angular/platform-browser": "2.2.3",
+    "@angular/platform-browser-dynamic": "2.2.3",
+    "@angular/router": "3.2.3",
+    "angular-in-memory-web-api": "0.1.1",
+    "reflect-metadata": "0.1.6",
+    "core-js": "2.4.1",
+    "rxjs": "5.0.0-beta.12",
+    "zone.js": "0.6.25"
+  },
+  "devDependencies": {
+    "angular2-template-loader": "0.5.0",
+    "raw-loader": "0.5.1",
+    "html-webpack-plugin": "2.22.0",
+    "ts-loader": "^0.9.5",
+    "typescript": "^2.0.6",
+    "typings": "^1.5.0",
+    "webpack": "^1.13.3",
+    "webpack-dev-server": "^1.16.2"
+  }
+```
+很显然，angular的库不是最新的，那么想升级到最新的库，而且不让他们出现error， 就需要我们严谨的进行以下几步。
+①npm list --depth 0 ：简单查看 依赖库 的信息
+```
+$ npm list --depth 0
++-- @angular/common@2.2.3
++-- @angular/compiler@2.2.3
++-- @angular/core@2.2.3
++-- @angular/forms@2.2.3
++-- @angular/http@2.2.3
++-- @angular/platform-browser@2.2.3
++-- @angular/platform-browser-dynamic@2.2.3
++-- @angular/router@3.2.3
++-- angular2-template-loader@0.5.0
++-- core-js@2.4.1
++-- html-webpack-plugin@2.22.0
++-- raw-loader@0.5.1
++-- rxjs@5.0.0-beta.12
++-- ts-loader@0.9.5
++-- typescript@2.3.4
++-- typings@1.5.0
++-- webpack@1.15.0
++-- webpack-dev-server@1.16.5
+`-- UNMET PEER DEPENDENCY zone.js@0.7.1
+
+npm ERR! peer dep missing: zone.js@^0.6.21, required by @angular/core@2.2.3
+
+```
+注意：其中的npm ERR! peer dep missing: zone.js@^0.6.21, required by @angular/core@2.2.3 需要的zone.js版本是 @^0.6.25，而0.7.1版本太高， 所以导致出现了错误，这就是常见的 peer dependencies 问题。只要修改为正确的版本后，就不会出现问题了。
+
+②npm outdated 查询当前package中有哪些依赖库是过时的
+
+![这里写图片描述](http://img.blog.csdn.net/20170601093133791?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMjQ5NTY1MTU=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+可以很清楚的看到当前版本和最新版本。但是请注意，千万不要盲目的把package中的版本号都替换为最新的，要考虑依赖的问题。angular的core库依赖rxjs.js，zone.js， 把angular升级到4.1.3，是否有必要把rxjs 或 zone.js升级为最新的版本呢？ 这需要验证一下。
+
+③npm view 包名称@版本号 peerDependencies ：查看具体某个依赖包的依赖关系
+
+```
+$ npm view @angular/core@4.1.3 peerDependencies
+{ rxjs: '^5.0.1', 'zone.js': '^0.8.4' }
+```
+查看 @angular/core@4.1.3的依赖关系 ，它依赖 { rxjs: '^5.0.1', 'zone.js': '^0.8.4' } , 也就是说升级@angular/core 到 4.1.3 需要升级rxjs, zone.js版本，而版本号就是所查看到的版本号。
+
+但是，修改完成 ng相关库为 4.1.3后，再次执行 npm install， 还是会有错误
+```
+$ npm list --depth 0
++-- @angular/common@4.1.3
++-- @angular/compiler@4.1.3
++-- UNMET PEER DEPENDENCY @angular/core@4.1.3
++-- @angular/forms@4.1.3
++-- UNMET PEER DEPENDENCY @angular/http@4.1.3
++-- @angular/platform-browser@4.1.3
++-- @angular/platform-browser-dynamic@4.1.3
++-- @angular/router@4.1.3
++-- angular-in-memory-web-api@0.1.1
++-- angular2-template-loader@0.5.0
++-- core-js@2.4.1
++-- html-webpack-plugin@2.22.0
++-- raw-loader@0.5.1
++-- reflect-metadata@0.1.6
++-- UNMET PEER DEPENDENCY rxjs@5.0.1
++-- ts-loader@0.9.5
++-- typescript@2.3.4
++-- typings@1.5.0
++-- webpack@1.15.0
++-- webpack-dev-server@1.16.5
+`-- UNMET PEER DEPENDENCY zone.js@0.8.4
+
+npm ERR! peer dep missing: @angular/core@^2.0.0, required by angular-in-memory-web-api@0.1.1
+npm ERR! peer dep missing: @angular/http@^2.0.0, required by angular-in-memory-web-api@0.1.1
+npm ERR! peer dep missing: rxjs@5.0.0-beta.12, required by angular-in-memory-web-api@0.1.1
+npm ERR! peer dep missing: zone.js@^0.6.25, required by angular-in-memory-web-api@0.1.1
+```
+可以看到是angular-in-memory-web-api版本问题，所以查看最新版本angular-in-memory-web-api最新版本依赖包情况
+```
+$ npm view angular-in-memory-web-api@0.3.2 peerDependencies
+{ '@angular/core': '>=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0',
+  '@angular/http': '>=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0',
+  rxjs: '^5.0.1' }
+```
+通过查看结果可以将angular-in-memory-web-api升级版本至0.3.2，升级版本后再次执行 npm install，发现错误已经全部解决，最终升级后的版本如下：
+
+```
+$ npm install
++-- @angular/common@4.1.3
++-- @angular/compiler@4.1.3
++-- @angular/core@4.1.3
++-- @angular/forms@4.1.3
++-- @angular/http@4.1.3
++-- @angular/platform-browser@4.1.3
++-- @angular/platform-browser-dynamic@4.1.3
++-- @angular/router@4.1.3
++-- angular-in-memory-web-api@0.3.2
++-- angular2-template-loader@0.5.0
++-- core-js@2.4.1
++-- html-webpack-plugin@2.22.0
++-- raw-loader@0.5.1
++-- reflect-metadata@0.1.6
++-- rxjs@5.0.1
++-- ts-loader@0.9.5
++-- typescript@2.3.4
++-- typings@1.5.0
++-- webpack@1.15.0
++-- webpack-dev-server@1.16.5
+`-- zone.js@0.8.4
+```
+**总结经验**
+总之，angular版本升级是个大工程，尤其是已经集成框架的大项目，稍有不慎，升级就会出现问题，进而影响各种包依赖错误问题，最终导致项目运行出错。但是，只要足够细心，按照正确的方式查找依赖，做好以上几步修改依赖，循序渐进，各种问题也会迎刃而解。
+
+
 You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run `jekyll serve`, which launches a web server and auto-regenerates your site when a file is updated.
 
 To add new posts, simply add a file in the `_posts` directory that follows the convention `YYYY-MM-DD-name-of-post.ext` and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.
