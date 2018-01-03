@@ -2,7 +2,7 @@
 layout: post
 title: Angular 依赖包详解说明
 category: 前端
-date: 2017-06-03 18:17:14
+date: 2016-12-12 11:21:46
 ---
 
 Angular 应用程序以及 Angular 本身都依赖于很多第三方包 ( 包括 Angular 自己 ) 提供的特性和功能。这些包由 Node 包管理器 (npm) 负责安装和维护。
