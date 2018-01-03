@@ -1,0 +1,49 @@
+# Basic
+title: Qmx Tech
+subtitle: Qmx Tech
+welcome_message: <a href="https://github.com/onevcat/vno-jekyll" target="_blank">Download the theme</a>
+description: 生活历来是勇敢者的游戏。在走向远方的旅程中，不要轻易撤退，有梦想和坚持的地方就会有奇迹.
+creator: <a href="http://www.qmxtech.top/">@qmxtech</a>
+
+url: "http://www.qmxtech.top"
+
+permalink: /:year/:month/:title/
+
+# Format
+highlighter: rouge
+
+# supported colors: blue, green, purple, red, orange or slate. If you need clear, leave it empty.
+cover_color: blue
+
+# The blog button should not be removed.
+blog_button:
+    title: 博客
+    description: 博客
+
+# Navigation buttons in the front page.
+nav:
+    - {title: 目录, description: 目录, url: 'http://blog.csdn.net/qq_24956515'}
+    # - {title: Another Button, description: A button, url: 'http://example.com'}
+
+# Pagination
+gems: [jekyll-paginate]
+paginate: 10
+paginate_path: "page/:num/"
+
+# Comment
+comment:
+    disqus: vno-jekyll
+    # duoshuo:
+
+# Social
+social:
+    weibo: qiaomingxing
+    github: qiaomingxing
+    twitter: qiaomingxing
+    gplus: 107108267983477358170
+    mail: qiaomingxing@gmail.com
+
+# Google Analytics
+ga:
+    # id: your_ga_id
+    # host: your_host
